@@ -39,10 +39,14 @@ def parse_args() -> argparse.Namespace:
 
               hdelete -A '*.bak' '*~'
                 Use only '*.bak' and '*~' as patterns (replacing the defaults).
+
+              hdelete -y
+                Run in non-interactive mode (auto-accept deletes).
             """,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument('-d', '--directory', default=os.getcwd(), type=str, help=HELP_DIRECTORY)
+    parser.add_argument('-y', '--yes', action='store_true', help='Automatically confirm file deletion (non-interactive mode).')
     pattern_mode = parser.add_mutually_exclusive_group()
     pattern_mode.add_argument('-a', '--append', nargs='+', metavar='PATTERN', help=HELP_APPEND)
     pattern_mode.add_argument('-A', '--alternative', nargs='+', metavar='PATTERN', help=HELP_ALTERNATIVE)
@@ -82,14 +86,17 @@ def find_files(directory: str, patterns=None) -> list:
     return sorted(matching_files)
 
 
-def prompt_user_delete(files: list) -> list:
-    """Prompts the user to confirm the deletion of the files found."""
+def prompt_user_delete(files: list, auto_accept: bool = False) -> list:
+    """Prompts the user to confirm the deletion of the files found. If auto_accept is True, skip prompt."""
     print(MSG_FOUND_FILES)
     for i, file in enumerate(files):
         print(f"{i + 1}: {file}")
     if len(files) > WARNING_THRESHOLD:
         print(f"\nWarning: More than {WARNING_THRESHOLD} files found!")
         print(f"{MSG_WARNING_THRESHOLD}")
+    if auto_accept:
+        print("Auto-accept enabled: proceeding with deletion.")
+        return files
     confirm_delete = input(f"\n{PROMPT_CONFIRM_DELETE}")
     if confirm_delete.strip().lower() not in ("y", "yes"):
         sys.exit(MSG_ACTION_CANCELLED)
@@ -115,7 +122,7 @@ def main() -> None:
 
     patterns = select_patterns(args)
     files = find_files(args.directory, patterns)
-    files_to_delete = prompt_user_delete(files)
+    files_to_delete = prompt_user_delete(files, auto_accept=getattr(args, 'yes', False))
     delete_files(files_to_delete)
 
 
