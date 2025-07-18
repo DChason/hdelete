@@ -1,0 +1,28 @@
+name: hdelete Help Flag Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-help-flag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Make script executable
+        run: chmod +x hdelete/hdelete
+
+      - name: Test -h flag
+        run: |
+          output=$(python3 hdelete/hdelete -h)
+          echo "$output"
+          echo "$output" | grep -F 'Run with default patterns'

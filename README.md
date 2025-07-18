@@ -67,6 +67,8 @@ chmod +x /usr/local/bin/hdelete
     - Append one or more patterns to the default list (e.g., `-a '*.log' '*.tmp'`).
 - `-A`, `--alternative`
     - Use only these patterns, replacing the default list (e.g., `-A '*.bak' '*~'`).
+- `-y`, `--yes`
+    - Run in non-interactive mode (auto-accept deletes).
 
 ---
 
