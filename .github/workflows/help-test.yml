@@ -19,10 +19,10 @@ jobs:
           python-version: '3.x'
 
       - name: Make script executable
-        run: chmod +x hdelete/hdelete
+        run: chmod +x hdelete
 
       - name: Test -h flag
         run: |
-          output=$(python3 hdelete/hdelete -h)
+          output=$(python3 hdelete -h)
           echo "$output"
           echo "$output" | grep -F 'Run with default patterns'
