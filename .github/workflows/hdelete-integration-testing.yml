@@ -1,0 +1,80 @@
+name: hdelete-integration-testing
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Make script executable
+        run: chmod +x hdelete
+
+      - name: Test root directory protection
+        run: |
+          set +e
+          OUTPUT=$(python3 hdelete -d / -y 2>&1)
+          STATUS=$?
+          echo "$OUTPUT"
+          echo "$OUTPUT" | grep -q "Refusing to run in the root directory"
+          [ $? -eq 0 ] && [ $STATUS -ne 0 ]
+
+      - name: Test default patterns
+        run: |
+          mkdir test_default
+          touch test_default/.DS_Store test_default/Thumbs.db test_default/should_not_delete.txt
+          python3 hdelete -d test_default -y
+          [ ! -e test_default/.DS_Store ] && [ ! -e test_default/Thumbs.db ] && [ -e test_default/should_not_delete.txt ]
+
+      - name: Test append patterns
+        run: |
+          mkdir test_append
+          touch test_append/.DS_Store test_append/bar.tmp test_append/foo.log test_append/should_not_delete.txt
+          python3 hdelete -d test_append -a .DS_Store bar.tmp foo.log -y
+          [ ! -e test_append/.DS_Store ] && [ ! -e test_append/bar.tmp ] && [ ! -e test_append/foo.log ] && [ -e test_append/should_not_delete.txt ]
+
+      - name: Test alternative patterns
+        run: |
+          mkdir test_alt
+          touch test_alt/foo.bak test_alt/bar.bak test_alt/should_not_delete.txt
+          python3 hdelete -d test_alt -A '*.bak' -y
+          [ ! -e test_alt/foo.bak ] && [ ! -e test_alt/bar.bak ] && [ -e test_alt/should_not_delete.txt ]
+
+      - name: Test no matches
+        run: |
+          mkdir test_nomatch
+          python3 hdelete -d test_nomatch -y
+
+      - name: Test user says no to deleting
+        run: |
+          mkdir test_no
+          touch test_no/.DS_Store
+          set +e
+          echo n | python3 hdelete -d test_no
+          [ -e test_no/.DS_Store ]
+
+      - name: Test warning threshold
+        run: |
+          mkdir test_warn
+          for i in $(seq 1 26); do mkdir test_warn/dir_$i; touch test_warn/dir_$i/.DS_Store; done
+          python3 hdelete -d test_warn -y
+          [ $(find test_warn -name '.DS_Store' | wc -l) -eq 0 ]
+
+      - name: Test warning threshold with user says no
+        run: |
+          mkdir test_warn_no
+          for i in $(seq 1 26); do mkdir test_warn_no/dir_$i; touch test_warn_no/dir_$i/.DS_Store; done
+          set +e
+          echo n | python3 hdelete -d test_warn_no
+          [ $(find test_warn_no -name '.DS_Store' | wc -l) -eq 26 ]
