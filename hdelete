@@ -82,7 +82,8 @@ def find_files(directory: str, patterns=None) -> list:
             if any(fnmatch.fnmatch(filename, pattern) for pattern in patterns):
                 matching_files.append(os.path.join(root, filename))
     if not matching_files:
-        sys.exit(f"{MSG_NO_MATCHING_FILES} '{directory}'")
+        print(f"{MSG_NO_MATCHING_FILES} '{directory}'")
+        sys.exit(0)
     return sorted(matching_files)
 
 
@@ -99,7 +100,8 @@ def prompt_user_delete(files: list, auto_accept: bool = False) -> list:
         return files
     confirm_delete = input(f"\n{PROMPT_CONFIRM_DELETE}")
     if confirm_delete.strip().lower() not in ("y", "yes"):
-        sys.exit(MSG_ACTION_CANCELLED)
+        print(MSG_ACTION_CANCELLED)
+        sys.exit(0)
     return files
 
 
@@ -118,7 +120,8 @@ def main() -> None:
     args = parse_args()
 
     if is_root_directory(args.directory):
-        sys.exit(MSG_DANGEROUS_DIRECTORY)
+        print(MSG_DANGEROUS_DIRECTORY)
+        sys.exit(1)
 
     patterns = select_patterns(args)
     files = find_files(args.directory, patterns)
