@@ -110,9 +110,7 @@ def prompt_user_delete(files: list, auto_accept: bool = False) -> list:
             print(f"{i + 1}: {file} ({size_str})")
         except OSError:
             print(f"{i + 1}: {file} (size unknown)")
-    
     print(f"\nTotal: {len(files)} file{'s' if len(files) != 1 else ''}, {format_file_size(total_size)}")
-    
     if len(files) > WARNING_THRESHOLD:
         print(f"\nWarning: More than {WARNING_THRESHOLD} files found!")
         print(f"{MSG_WARNING_THRESHOLD}")
