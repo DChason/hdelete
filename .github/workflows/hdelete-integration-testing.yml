@@ -78,3 +78,23 @@ jobs:
           set +e
           echo n | python3 hdelete -d test_warn_no
           [ $(find test_warn_no -name '.DS_Store' | wc -l) -eq 26 ]
+
+      - name: Test file deletion with size reporting
+        run: |
+          mkdir -p test_dir
+          dd if=/dev/zero of=test_dir/.DS_Store bs=1024 count=1 2>/dev/null  # 1KB file
+          dd if=/dev/zero of=test_dir/Thumbs.db bs=2048 count=1 2>/dev/null  # 2KB file
+          touch "test_dir/._hidden file"  # 0B file
+          
+          output=$(cd test_dir && python3 ../hdelete -y 2>&1)
+          echo "$output" | grep -q 'Found files:' || { echo "Missing 'Found files:' in output"; exit 1; }
+          echo "$output" | grep -qE '[0-9]+:.*\.DS_Store.*\(1\.0 KB\)' || { echo "Missing .DS_Store with size 1.0 KB"; exit 1; }
+          echo "$output" | grep -qE '[0-9]+:.*Thumbs\.db.*\(2\.0 KB\)' || { echo "Missing Thumbs.db with size 2.0 KB"; exit 1; }
+          echo "$output" | grep -qE '[0-9]+:.*\._hidden file.*\(0 B\)' || { echo "Missing ._hidden file with size 0 B"; exit 1; }
+          
+          echo "$output" | grep -qE 'Total: 3 files, 3\.0 KB' || { echo "Incorrect total files/size"; exit 1; }
+          echo "$output" | grep -q 'Files deleted.' || { echo "Missing 'Files deleted.' message"; exit 1; }
+          
+          [ ! -f test_dir/.DS_Store ] || exit 1
+          [ ! -f test_dir/Thumbs.db ] || exit 1
+          [ ! -f "test_dir/._hidden file" ] || exit 1
