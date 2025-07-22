@@ -109,7 +109,6 @@ def prompt_user_delete(files: list, auto_accept: bool = False) -> list:
             size_str = format_file_size(file_size)
             print(f"{i + 1}: {file} ({size_str})")
         except OSError:
-            # Handle case where file might not exist or be accessible
             print(f"{i + 1}: {file} (size unknown)")
     
     print(f"\nTotal: {len(files)} file{'s' if len(files) != 1 else ''}, {format_file_size(total_size)}")
