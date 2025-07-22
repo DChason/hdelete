@@ -72,6 +72,17 @@ def select_patterns(args) -> list:
     return DEFAULT_PATTERNS
 
 
+def format_file_size(size_bytes: int) -> str:
+    """Convert bytes to human readable format."""
+    if size_bytes == 0:
+        return "0 B"
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if size_bytes < 1024.0:
+            return f"{size_bytes:.1f} {unit}"
+        size_bytes /= 1024.0
+    return f"{size_bytes:.1f} TB"
+
+
 def find_files(directory: str, patterns=None) -> list:
     """Finds files in the specified directory that match the defined patterns."""
     if patterns is None:
@@ -90,8 +101,19 @@ def find_files(directory: str, patterns=None) -> list:
 def prompt_user_delete(files: list, auto_accept: bool = False) -> list:
     """Prompts the user to confirm the deletion of the files found. If auto_accept is True, skip prompt."""
     print(MSG_FOUND_FILES)
+    total_size = 0
     for i, file in enumerate(files):
-        print(f"{i + 1}: {file}")
+        try:
+            file_size = os.path.getsize(file)
+            total_size += file_size
+            size_str = format_file_size(file_size)
+            print(f"{i + 1}: {file} ({size_str})")
+        except OSError:
+            # Handle case where file might not exist or be accessible
+            print(f"{i + 1}: {file} (size unknown)")
+    
+    print(f"\nTotal: {len(files)} file{'s' if len(files) != 1 else ''}, {format_file_size(total_size)}")
+    
     if len(files) > WARNING_THRESHOLD:
         print(f"\nWarning: More than {WARNING_THRESHOLD} files found!")
         print(f"{MSG_WARNING_THRESHOLD}")
